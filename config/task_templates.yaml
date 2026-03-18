@@ -1,0 +1,125 @@
+# ═══════════════════════════════════════════════════════
+#  Task Templates – define reusable automation recipes
+# ═══════════════════════════════════════════════════════
+#
+# Each template has:
+#   platform   – x | facebook | tiktok
+#   task_type  – a short identifier
+#   prompt     – the natural-language instruction sent to Page-Agent
+#                Use {variable} placeholders filled at runtime.
+#   url        – (optional) starting URL; {variable} placeholders allowed
+#   min_delay / max_delay – override global delay for this template (seconds)
+
+platforms:
+
+  # ─── X.com (Twitter) ───────────────────────────────
+  x:
+    base_url: "https://x.com"
+    tasks:
+
+      post_tweet:
+        prompt: >
+          Compose and post a new tweet with the following content: "{content}".
+          Make sure the tweet is successfully posted before finishing.
+        url: "https://x.com/compose/post"
+        min_delay: 3
+        max_delay: 8
+
+      like_tweet:
+        prompt: >
+          Find a tweet from user @{target_user} and like it.
+          If already on the user's profile, scroll to find a recent tweet and like it.
+        url: "https://x.com/{target_user}"
+
+      follow_user:
+        prompt: >
+          Go to the profile of @{target_user} and follow them.
+          If already following, skip and report "already following".
+        url: "https://x.com/{target_user}"
+
+      retweet:
+        prompt: >
+          Find a recent tweet from @{target_user} and retweet it.
+        url: "https://x.com/{target_user}"
+
+      reply:
+        prompt: >
+          Find a recent tweet from @{target_user} and reply with: "{content}".
+        url: "https://x.com/{target_user}"
+
+      scrape_feed:
+        prompt: >
+          Scroll through the home feed and collect the text of the first {count}
+          tweets. Return them as a numbered list.
+        url: "https://x.com/home"
+
+  # ─── Facebook ──────────────────────────────────────
+  facebook:
+    base_url: "https://www.facebook.com"
+    tasks:
+
+      post_status:
+        prompt: >
+          Create a new post on my timeline with the following content: "{content}".
+          Confirm the post was successfully published.
+        url: "https://www.facebook.com"
+        min_delay: 4
+        max_delay: 10
+
+      like_post:
+        prompt: >
+          Scroll the news feed and like the first post that appears.
+        url: "https://www.facebook.com"
+
+      comment:
+        prompt: >
+          Find a recent post from {target_user} and leave this comment: "{content}".
+        url: "https://www.facebook.com/{target_user}"
+
+      scrape_page:
+        prompt: >
+          Visit the page "{target_user}" and collect the text of the last {count} posts.
+          Return them as a numbered list.
+        url: "https://www.facebook.com/{target_user}"
+
+  # ─── TikTok ────────────────────────────────────────
+  tiktok:
+    base_url: "https://www.tiktok.com"
+    tasks:
+
+      like_video:
+        prompt: >
+          Open the For You feed, scroll to a video, and like it.
+        url: "https://www.tiktok.com/foryou"
+
+      follow_user:
+        prompt: >
+          Go to the profile of @{target_user} and follow them.
+        url: "https://www.tiktok.com/@{target_user}"
+
+      comment:
+        prompt: >
+          Open the For You feed, find a video, and leave this comment: "{content}".
+        url: "https://www.tiktok.com/foryou"
+
+      scrape_trending:
+        prompt: >
+          Browse the Explore/Discover page and collect the titles or descriptions
+          of the first {count} trending videos. Return as a numbered list.
+        url: "https://www.tiktok.com/explore"
+
+  # ─── Generic (cross-platform) ──────────────────────
+  generic:
+    base_url: ""
+    tasks:
+
+      warm_up:
+        prompt: >
+          Browse this website naturally for a few minutes.
+          Scroll around, click on interesting links, read some content.
+          Behave like a normal human user exploring the site.
+        min_delay: 5
+        max_delay: 15
+
+      custom:
+        prompt: "{instruction}"
