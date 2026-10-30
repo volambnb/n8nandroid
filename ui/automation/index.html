@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>autoIXB · App Editor</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='18' fill='%236c63ff'/%3E%3Ctext x='50%25' y='55%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='28' font-weight='700' fill='white'%3EIX%3C/text%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="/automation-ui/styles.css?v=app-editor-26" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="nav-sidebar">
+      <div class="brand compact-brand" aria-label="autoIXB">
+        <div class="brand-mark" aria-hidden="true">IX</div>
+        <div class="brand-copy"><h1>autoIXB</h1><p>Studio tự động hóa</p></div>
+      </div>
+
+      <nav class="main-nav" aria-label="Điều hướng chính">
+        <button class="nav-item" type="button" data-main-tab="createProfile">
+          <span class="nav-icon" aria-hidden="true">＋</span>
+          <span>Tạo profile</span>
+        </button>
+        <button class="nav-item" type="button" data-main-tab="profiles">
+          <span class="nav-icon" aria-hidden="true">▤</span>
+          <span>Hồ sơ</span>
+        </button>
+        <button class="nav-item" type="button" data-main-tab="proxyManager">
+          <span class="nav-icon" aria-hidden="true">⇄</span>
+          <span>Proxy</span>
+        </button>
+        <button class="nav-item active" type="button" data-main-tab="automation">
+          <span class="nav-icon" aria-hidden="true">⌘</span>
+          <span>App Editor</span>
+        </button>
+      </nav>
+      <div class="sidebar-tools">
+        <button id="workspacePanelToggle" class="nav-item utility-nav-item" type="button" aria-expanded="false" aria-controls="workspacePanel">
+          <span class="nav-icon" aria-hidden="true">◈</span>
+          <span>Tiện ích trình duyệt</span>
+        </button>
+      </div>
+      <div class="sidebar-status"><span class="status-dot"></span><span>Không gian cục bộ</span></div>
+    </aside>
+
+    <aside id="workspacePanel" class="left-panel workspace-panel" aria-label="Tiện ích trình duyệt">
+      <div class="workspace-title">
+          <h2 id="workspaceTitle">App Editor</h2>
+          <p id="workspaceSubtitle">Ứng dụng và tiện ích trình duyệt</p>
+      </div>
+
+      <div class="token-box is-hidden">
+        <label for="apiToken">Bearer Token</label>
+        <input id="apiToken" type="password" autocomplete="current-password" placeholder="Không bắt buộc nếu chưa đặt API_BEARER_TOKEN" />
+      </div>
+
+      <section id="automationWorkspace" class="workspace-tab active">
+        <details class="workspace-disclosure">
+          <summary>Tác vụ đã lưu</summary>
+          <div class="disclosure-body list-section">
+            <div class="section-header">
+              <h3>Tác vụ</h3>
+              <button id="refreshTasksBtn" class="ghost">Tải lại</button>
+            </div>
+            <div class="task-create">
+              <input id="taskName" type="text" placeholder="Tên tác vụ từ workflow này" />
+              <button id="saveTaskBtn" class="secondary">Lưu tác vụ</button>
+            </div>
+            <div id="taskList" class="list-scroll"></div>
+          </div>
+        </details>
+
+        <details class="workspace-disclosure extensions-section" open>
+          <summary>Tiện ích trình duyệt</summary>
+          <div class="disclosure-body list-section">
+            <div class="section-header">
+              <h3>Tiện ích</h3>
+              <button id="refreshExtensionsBtn" class="ghost">Tải lại</button>
+            </div>
+            <div class="extension-actions">
+              <button id="uploadExtensionBtn" class="secondary">Tải file .zip</button>
+              <button id="importUrlExtensionBtn" class="secondary">Nhập URL</button>
+              <input id="extensionFileInput" type="file" accept=".zip" hidden />
+            </div>
+            <p class="extension-help-text">Cấu hình tiện ích dùng chung cho các profile được mở bởi autoIXB.</p>
+            <div class="extension-flags">
+              <label class="extension-flag"><input id="extLoadEnabled" type="checkbox" /><span>Nạp tiện ích khi mở profile</span></label>
+              <label class="extension-flag"><input id="extDisableWelcome" type="checkbox" /><span>Tắt trang chào tiện ích</span></label>
+              <label class="extension-flag"><input id="extDisableOther" type="checkbox" /><span>Tắt tiện ích khác</span></label>
+            </div>
+            <div class="extension-manual-add">
+              <input id="extensionPathInput" type="text" placeholder="Đường dẫn thư mục tiện ích (D:\...)" />
+              <button id="addPathExtensionBtn" class="secondary">Thêm đường dẫn</button>
+            </div>
+            <textarea id="extensionStartupArgs" rows="2" placeholder="Tham số khởi động, mỗi dòng một giá trị"></textarea>
+            <div id="extensionList" class="extension-list"></div>
+          </div>
+        </details>
+      </section>
+
+      <section id="createProfileWorkspace" class="workspace-tab">
+        <div class="helper-card">
+          <h3>Tạo profile</h3>
+          <p>Tạo profile IXBrowser qua Local API. Mặc định dùng trang trống, kết nối trực tiếp và fingerprint ngẫu nhiên.</p>
+        </div>
+        <button id="createProfileRefreshMetaBtn" class="secondary">Kiểm tra nhóm và thẻ</button>
+      </section>
+
+      <section id="profilesWorkspace" class="workspace-tab">
+        <div class="helper-card">
+          <h3>Profiles</h3>
+          <p>Tìm, lọc, mở, đóng, sao chép hoặc xóa profile.</p>
+        </div>
+        <button id="profilesRefreshBtnSide" class="secondary">Tải lại profiles</button>
+      </section>
+
+      <section id="proxyWorkspace" class="workspace-tab">
+        <div class="helper-card">
+          <h3>Quản lý proxy</h3>
+          <p>Tạo, sửa, xóa proxy và gán proxy cho profile đã chọn.</p>
+        </div>
+        <button id="proxiesRefreshBtnSide" class="secondary">Tải lại proxy</button>
+      </section>
+    </aside>
+
+    <main class="studio">
+      <header class="topbar">
+        <div class="topbar-title">
+          <span class="topbar-logo" aria-hidden="true">IX</span>
+          <div><h1>App Editor</h1><p>Thiết kế và chạy tự động hóa trình duyệt</p></div>
+        </div>
+        <div class="topbar-status"><span class="status-dot"></span> Sẵn sàng</div>
+      </header>
+
+      <section class="tab-body main-tab-content active" id="builderTab" data-main-content="automation">
+        <section id="appHome" class="app-home" aria-label="Danh sách ứng dụng">
+          <div id="appHomeTabs" class="app-home-tabs" aria-label="Tab ứng dụng"></div>
+          <div class="app-home-content">
+            <div class="app-home-actions">
+              <button id="newAppHomeBtn" class="primary app-add-button" type="button"><span aria-hidden="true">＋</span><span>Thêm ứng dụng</span></button>
+              <label class="app-search-box"><span aria-hidden="true">⌕</span><input id="appHomeSearch" type="search" placeholder="Tìm ứng dụng" aria-label="Tìm ứng dụng" /></label>
+            </div>
+            <div class="app-recent-header"><h2>Ứng dụng gần đây</h2><span>Lần xem gần nhất</span></div>
+            <div id="appHomeRecent" class="app-home-recent"></div>
+            <div id="appHomeEmpty" class="app-home-empty" hidden><span class="empty-app-icon" aria-hidden="true">◇</span><h3>Chưa có ứng dụng</h3><p>Tạo ứng dụng đầu tiên để bắt đầu dựng luồng tự động hóa.</p><button id="newAppEmptyBtn" class="secondary" type="button">＋ Tạo ứng dụng</button></div>
+          </div>
+        </section>
+
+        <div id="builderLayout" class="builder-layout is-hidden">
+          <aside class="editor-sidebar">
+            <div id="appEditorTabs" class="app-editor-tabs" aria-label="Tab ứng dụng"></div>
+            <button id="backToAppsBtn" class="back-to-apps" type="button"><span aria-hidden="true">←</span> Về danh sách ứng dụng</button>
+            <div class="editor-app-heading">
+              <div class="editor-app-name-row">
+                <input id="appName" type="text" placeholder="Tên ứng dụng" aria-label="Tên ứng dụng" />
+                <button id="focusAppNameBtn" class="icon-button" type="button" title="Đổi tên ứng dụng" aria-label="Đổi tên ứng dụng">✎</button>
+              </div>
+              <span id="appVersion" class="app-version">Bản nháp</span>
+            </div>
+            <details class="editor-app-details">
+              <summary>Mô tả ứng dụng</summary>
+              <textarea id="appDesc" rows="2" placeholder="Ứng dụng này dùng để làm gì?"></textarea>
+            </details>
+            <div class="editor-app-actions">
+              <button id="saveAppBtn" class="primary" type="button">Lưu ứng dụng</button>
+              <button id="deleteAppBtn" class="icon-button danger-icon" type="button" title="Xóa ứng dụng" aria-label="Xóa ứng dụng">⌫</button>
+            </div>
+            <div class="editor-test-profile">
+              <div class="editor-section-heading"><div><span class="editor-step">01</span><strong>Profile chạy thử</strong></div><button id="loadProfilesBtn" class="ghost" type="button">Tải lại</button></div>
+              <details id="profilePicker" class="profile-picker">
+                <summary id="selectedProfilesSummary">Chưa chọn profile</summary>
+                <div class="profile-picker-body">
+                  <div class="profile-search-row"><input id="profileSearch" type="text" placeholder="Tìm profile theo tên hoặc ID" /><button id="reloadProfilesBtn" class="ghost" type="button">Tải lại</button></div>
+                  <div id="profilePickerList" class="profile-picker-list"></div>
+                  <div class="profile-picker-footer">
+                    <div class="profile-filter-row">
+                      <input id="groupId" type="number" min="0" value="0" placeholder="group" />
+                      <input id="tagId" type="number" min="0" value="0" placeholder="tag" />
+                      <input id="profilePageSize" type="number" min="1" max="100" value="12" placeholder="show" title="Số profile mỗi trang" />
+                      <button id="selectAllProfilesBtn" class="ghost" type="button">Chọn tất cả</button>
+                      <button id="clearProfileSelectionBtn" class="ghost" type="button">Bỏ chọn</button>
+                    </div>
+                    <div class="profile-pagination"><button id="profilePrevPageBtn" class="ghost" type="button">&lt;</button><span id="profilePageLabel">1</span><button id="profileNextPageBtn" class="ghost" type="button">&gt;</button></div>
+                  </div>
+                </div>
+              </details>
+              <input id="profileIds" type="hidden" />
+              <button id="runAppBtn" class="primary run-test-button" type="button"><span id="runAppIcon" aria-hidden="true">▶</span><span id="runAppLabel">Chạy thử ứng dụng</span></button>
+              <button id="runAppStopBtn" class="danger run-app-stop-button" type="button" disabled>■ Dừng ứng dụng</button>
+              <div id="appRunInputs" class="app-run-inputs" hidden></div>
+              <button id="openPhoneRecorderBtn" class="secondary phone-recorder-open" type="button">▣ Ghi thao tác phone</button>
+            </div>
+            <div class="node-palette-section"><div class="editor-section-heading"><div><span class="editor-step">02</span><strong>Tìm node</strong></div></div><aside class="palette" id="palette"></aside></div>
+          </aside>
+
+          <section class="canvas-wrap">
+            <div class="canvas-toolbar">
+              <span class="canvas-toolbar-title">Sơ đồ ứng dụng</span>
+              <button id="clearCanvasBtn" class="ghost">Xóa sơ đồ</button>
+              <label class="small" for="edgeLabelSelect">Nhánh kết nối</label>
+              <select id="edgeLabelSelect">
+                <option value="next">next</option>
+                <option value="true">true</option>
+                <option value="false">false</option>
+                <option value="error">error</option>
+                <option value="loop">loop</option>
+                <option value="break">break</option>
+                <option value="fallback">fallback</option>
+                <option value="success">success</option>
+              </select>
+              <button id="exportGraphBtn" class="ghost">Xuất JSON</button>
+              <button id="exportBundleBtn" class="ghost" type="button">Gói app</button>
+              <button id="importBundleBtn" class="ghost" type="button">Nhập gói</button>
+              <input id="importBundleFile" type="file" accept=".zip,application/zip" hidden />
+            </div>
+
+            <div class="canvas-viewport">
+              <div id="canvas" class="canvas" tabindex="0" role="region" aria-label="Sơ đồ workflow; kéo node vào đây để thêm">
+                <div id="canvasWorld" class="canvas-world">
+                  <svg id="edgeLayer" class="edge-layer"></svg>
+                </div>
+              </div>
+              <div class="canvas-zoom-controls" role="group" aria-label="Điều khiển thu phóng sơ đồ">
+                <button id="canvasZoomOutBtn" class="canvas-zoom-button" type="button" title="Thu nhỏ" aria-label="Thu nhỏ sơ đồ">−</button>
+                <span id="canvasZoomLabel" class="canvas-zoom-label" aria-live="polite">100%</span>
+                <button id="canvasZoomInBtn" class="canvas-zoom-button" type="button" title="Phóng to" aria-label="Phóng to sơ đồ">+</button>
+                <button id="canvasZoomFitBtn" class="canvas-zoom-fit" type="button" title="Hiện toàn bộ node" aria-label="Hiện toàn bộ node">Fit</button>
+              </div>
+            </div>
+
+            <details id="runDock" class="run-dock">
+              <summary>Nhật ký chạy <span class="run-dock-summary-hint">Mở để xem tiến trình và lỗi</span></summary>
+              <div class="run-dock-content">
+                <div class="run-dock-top">
+                  <h3>Nhật ký các node</h3>
+                  <div class="run-dock-actions">
+                    <button id="refreshRunsBtn" class="ghost">Tải lại log</button>
+                    <button id="stopRunBtn" class="danger" disabled>Dừng</button>
+                  </div>
+                </div>
+                <div class="run-dock-body">
+                  <section class="run-dock-detail" aria-label="Nhật ký node">
+                    <pre id="runLogs" class="log-box tall" aria-live="polite"></pre>
+                  </section>
+                </div>
+              </div>
+            </details>
+          </section>
+
+          <dialog id="nodePropertiesDialog" class="node-properties-dialog" aria-labelledby="nodeDialogTitle">
+            <section class="inspector node-properties-body">
+              <header class="node-dialog-header">
+                <span id="nodeDialogIcon" class="node-dialog-icon" aria-hidden="true"></span>
+                <h3 id="nodeDialogTitle">Thuộc tính node</h3>
+                <button id="removeNodeBtn" class="node-dialog-delete" type="button" title="Xóa node" aria-label="Xóa node">🗑</button>
+                <button id="closeNodePropertiesBtn" class="node-dialog-close" type="button" title="Đóng" aria-label="Đóng">×</button>
+              </header>
+              <div id="nodeMeta" class="node-meta" hidden>Chọn node để chỉnh cấu hình</div>
+              <div id="nodeForm" class="node-form"></div>
+              <details class="advanced-json">
+                <summary>Cấu hình nâng cao</summary>
+                <div class="node-form-add">
+                  <input id="newConfigKey" type="text" placeholder="Tên trường" />
+                  <input id="newConfigValue" type="text" placeholder='Giá trị hoặc JSON: {"a":1}' />
+                  <button id="addConfigFieldBtn" class="secondary">Thêm trường</button>
+                </div>
+                <textarea id="nodeConfigEditor" rows="10" spellcheck="false" aria-label="Cấu hình node dạng JSON"></textarea>
+                <button id="applyNodeConfigBtn" class="secondary">Áp dụng JSON</button>
+              </details>
+              <details class="edge-list-disclosure" hidden>
+                <summary>Danh sách kết nối</summary>
+                <div id="edgeList" class="edge-list"></div>
+              </details>
+              <footer class="node-dialog-actions">
+                <span>Lưu node sẽ áp dụng thay đổi vào sơ đồ. Lưu ứng dụng để lưu lâu dài.</span>
+                <button id="cancelNodeBtn" class="secondary" type="button">Hủy</button>
+                <button id="saveNodeBtn" class="primary" type="button">Lưu node</button>
+              </footer>
+            </section>
+          </dialog>
+        </div>
+      </section>
+
+      <dialog id="saveAppPrompt" class="save-app-prompt" aria-labelledby="saveAppPromptTitle" aria-describedby="saveAppPromptMessage">
+        <div class="save-app-prompt-icon" aria-hidden="true">↗</div>
+        <h2 id="saveAppPromptTitle">Rời ứng dụng đang chỉnh sửa?</h2>
+        <p id="saveAppPromptMessage">Bạn có muốn lưu ứng dụng hiện tại trước khi quay về màn hình App Editor không?</p>
+        <div class="save-app-prompt-actions">
+          <button id="discardAppAndGoHomeBtn" class="secondary" type="button">Không lưu</button>
+          <button id="saveAppAndGoHomeBtn" class="primary" type="button">Có, lưu</button>
+        </div>
+      </dialog>
+
+      <dialog id="phoneRecorderDialog" class="phone-recorder-dialog" aria-labelledby="phoneRecorderTitle">
+        <header class="phone-recorder-header">
+          <div><h2 id="phoneRecorderTitle">Ghi thao tác phone</h2></div>
+          <button id="closePhoneRecorderBtn" class="icon-button" type="button" aria-label="Đóng">×</button>
+        </header>
+        <div class="phone-recorder-layout">
+          <section class="phone-recorder-preview-panel">
+            <div class="phone-recorder-screen-area" aria-label="Khung xem toàn màn hình phone">
+              <img id="phoneRecorderBackdrop" class="phone-recorder-backdrop" alt="" aria-hidden="true" />
+              <div id="phoneRecorderPreview" class="phone-recorder-preview" aria-label="Ảnh màn hình phone">
+                <img id="phoneRecorderImage" alt="Ảnh màn hình phone" draggable="false" />
+                <div id="phoneRecorderCropRect" class="phone-recorder-crop-rect" hidden></div>
+                <div id="phoneRecorderMatchRect" class="phone-recorder-match-rect" hidden></div>
+                <div id="phoneRecorderTouchLayer" class="phone-recorder-touch-layer" aria-hidden="true"></div>
+              </div>
+            </div>
+          </section>
+          <aside class="phone-recorder-events-panel">
+            <section class="phone-recorder-meta">
+              <p id="phoneRecorderStatus">Chọn đúng ADB serial của phone cần điều khiển.</p>
+              <div><span id="phoneRecorderResolution">Chưa kết nối</span><span id="phoneRecorderStreamStatus">Chưa có luồng ảnh</span><button id="phoneRecorderCropBtn" class="ghost" type="button" disabled>Cắt ảnh mẫu</button></div>
+              <small class="phone-recorder-help">Mỗi lần mở Ghi thao tác phone là một phiên trắng mới. Chạm để ghi tap, giữ để ghi nhấn lâu, kéo để vuốt. Khi cắt ảnh mẫu, kéo vùng nhỏ và rõ nét trên màn hình.</small>
+            </section>
+            <section class="phone-recorder-device-controls">
+              <label for="phoneRecorderSerial">Thiết bị phone</label>
+              <div class="phone-recorder-device-row"><select id="phoneRecorderSerial"><option value="">Đang tải thiết bị…</option></select><button id="refreshPhoneDevicesBtn" class="ghost" type="button">Tải lại</button></div>
+              <div class="phone-recorder-recording-actions">
+                <button id="startPhoneRecordingBtn" class="primary" type="button">Bắt đầu ghi</button>
+                <button id="pausePhoneRecordingBtn" class="secondary" type="button" disabled>Tạm dừng</button>
+                <button id="markPhoneSegmentBtn" class="secondary" type="button" disabled hidden>Đánh dấu đoạn</button>
+                <button id="finishPhoneRecordingBtn" class="danger" type="button" disabled>Kết thúc</button>
+              </div>
+            </section>
+            <section class="phone-recorder-input-panel">
+              <label for="phoneRecorderText">Nhập chữ/URL vào phone và ghi thành node riêng</label>
+              <input id="phoneRecorderText" type="text" placeholder="Chạm ô nhập trên phone, rồi nhập chữ hoặc URL ở đây" />
+              <div class="phone-recorder-input-row">
+                <label><input id="phoneRecorderSecret" type="checkbox" /> Mật khẩu/OTP</label>
+                <span class="phone-recorder-sensitive-help">Chữ thường tạo node Type Text; mật khẩu dùng biến đầu vào.</span>
+                <button id="phoneRecorderTypeBtn" class="secondary" type="button" disabled>Nhập và ghi node</button>
+                <button id="phoneRecorderEnterBtn" class="ghost" type="button" disabled>Enter</button>
+                <button id="phoneRecorderBackBtn" class="ghost" type="button" disabled>Quay lại</button>
+                <button id="phoneRecorderHomeBtn" class="ghost" type="button" disabled>Home</button>
+              </div>
+            </section>
+            <h3>Các thao tác đã ghi</h3>
+            <div id="phoneRecorderSegments" class="phone-recorder-segments"></div>
+            <ol id="phoneRecorderEvents" class="phone-recorder-events"></ol>
+            <div class="phone-recorder-generate">
+              <label for="phoneRecorderAppName">Tên ứng dụng<input id="phoneRecorderAppName" type="text" value="Phone workflow" /></label>
+              <button id="generatePhoneAppsBtn" class="primary" type="button" disabled>Tạo một app từ bản ghi</button>
+              <button id="deletePhoneDraftBtn" class="ghost" type="button" disabled>Xóa bản nháp</button>
+            </div>
+          </aside>
+        </div>
+      </dialog>
+
+      <section class="tab-body main-tab-content ix-page" id="createProfileTab" data-main-content="createProfile">
+        <div class="ix-page-header">
+          <div>
+            <h2>Tạo profile mới</h2>
+            <p>Tạo cấu hình profile IXBrowser qua Local API.</p>
+          </div>
+          <button id="createProfileSubmitBtn" class="primary">Tạo profile</button>
+        </div>
+        <form id="createProfileForm" class="ix-form-grid">
+          <div class="ix-card span-2">
+            <h3>Thông tin profile</h3>
+            <label for="newProfileName">Tên profile</label><input id="newProfileName" name="name" type="text" placeholder="Tên dễ nhận biết" required />
+            <label for="newProfileGroup">ID nhóm</label><input id="newProfileGroup" name="group_id" type="number" min="0" placeholder="0" />
+            <label for="newProfileTag">Thẻ</label><input id="newProfileTag" name="tag" type="text" placeholder="ví dụ: test, samsung" />
+            <label for="newProfileNote">Ghi chú</label><textarea id="newProfileNote" name="note" rows="3" placeholder="Ghi chú nội bộ"></textarea>
+          </div>
+          <div class="ix-card">
+            <h3>Tài khoản (không bắt buộc)</h3>
+            <label for="profileUsername">Tên đăng nhập</label><input id="profileUsername" name="username" type="text" placeholder="email hoặc user" />
+            <label for="profilePassword">Mật khẩu</label><input id="profilePassword" name="password" type="password" placeholder="Không bắt buộc" />
+            <label for="profileTfa">Mã 2FA</label><input id="profileTfa" name="tfa_secret" type="text" placeholder="Không bắt buộc" />
+          </div>
+          <div class="ix-card">
+            <h3>Khởi động</h3>
+            <label for="profileStartupPage">Trang mở đầu</label>
+            <select id="profileStartupPage" name="startup_page">
+              <option value="blank">Trang trống</option>
+              <option value="custom_url">Địa chỉ tùy chỉnh</option>
+            </select>
+            <label for="profileCustomUrl">Địa chỉ mở đầu</label><input id="profileCustomUrl" name="custom_url" type="url" placeholder="https://example.com" />
+            <label class="check-row"><input name="random_on_create" type="checkbox" checked /> Tạo fingerprint ngẫu nhiên</label>
+          </div>
+          <div class="ix-card span-2">
+            <h3>Kết nối proxy</h3>
+            <label for="profileProxyMode">Chế độ proxy</label>
+            <select id="profileProxyMode" name="proxy_mode">
+              <option value="direct">Kết nối trực tiếp</option>
+              <option value="custom">Proxy riêng</option>
+              <option value="purchased_proxy">Proxy đã mua</option>
+            </select>
+            <p id="profileProxyDirectHelp" class="ix-proxy-mode-help">Profile sẽ kết nối trực tiếp bằng mạng hiện tại, không cần nhập proxy.</p>
+            <div class="ix-inline-grid">
+              <div data-profile-proxy-mode="custom" hidden><label for="profileProxyType">Loại proxy</label><select id="profileProxyType" name="proxy_type"><option>http</option><option>https</option><option>socks5</option><option>ssh</option></select></div>
+              <div data-profile-proxy-mode="custom" hidden><label for="profileProxyIp">Máy chủ</label><input id="profileProxyIp" name="proxy_ip" type="text" placeholder="host hoặc IP" /></div>
+              <div data-profile-proxy-mode="custom" hidden><label for="profileProxyPort">Cổng</label><input id="profileProxyPort" name="proxy_port" type="text" placeholder="Cổng" /></div>
+              <div data-profile-proxy-mode="custom" hidden><label for="profileProxyUser">Tài khoản proxy</label><input id="profileProxyUser" name="proxy_user" type="text" placeholder="Không bắt buộc" /></div>
+              <div data-profile-proxy-mode="custom" hidden><label for="profileProxyPassword">Mật khẩu proxy</label><input id="profileProxyPassword" name="proxy_password" type="password" placeholder="Không bắt buộc" /></div>
+              <div data-profile-proxy-mode="custom" hidden><label for="profileProxyLine">Tuyến kiểm tra</label><select id="profileProxyLine" name="proxy_check_line"><option value="global_line">Global</option><option value="cn_line">China</option></select></div>
+              <div data-profile-proxy-mode="purchased_proxy" hidden><label for="profileProxyId">ID proxy đã mua</label><input id="profileProxyId" name="proxy_id" type="text" placeholder="ID proxy" /></div>
+            </div>
+          </div>
+        </form>
+        <pre id="createProfileResult" class="ix-result" aria-live="polite"></pre>
+      </section>
+
+      <section class="tab-body main-tab-content ix-page" id="profilesTab" data-main-content="profiles">
+        <div class="ix-page-header">
+          <div>
+            <h2>Hồ sơ</h2>
+            <p>Tìm kiếm và quản lý các cấu hình trình duyệt.</p>
+          </div>
+          <button id="profilesRefreshBtn" class="secondary">Tải lại profiles</button>
+        </div>
+        <div class="ix-filter-row">
+          <input id="profilesKeyword" type="search" aria-label="Tìm profile" placeholder="Tìm theo tên hoặc ID" />
+          <input id="profilesGroupId" type="number" min="0" value="0" aria-label="Lọc theo ID nhóm" placeholder="Nhóm" />
+          <input id="profilesTagId" type="number" min="0" value="0" aria-label="Lọc theo ID thẻ" placeholder="Thẻ" />
+          <input id="profilesLimit" type="number" min="1" max="100" value="20" aria-label="Số profile mỗi trang" placeholder="Số dòng" />
+          <button id="profilesPrevBtn" class="ghost">Trước</button>
+          <span id="profilesPageLabel" class="ix-page-label">1</span>
+          <button id="profilesNextBtn" class="ghost">Sau</button>
+        </div>
+        <div id="profilesTable" class="ix-table"></div>
+      </section>
+
+      <section class="tab-body main-tab-content ix-page" id="proxyManagerTab" data-main-content="proxyManager">
+        <div class="ix-page-header">
+          <div>
+            <h2>Proxy</h2>
+            <p>Quản lý proxy và gán cho các profile đã chọn.</p>
+          </div>
+          <button id="proxiesRefreshBtn" class="secondary">Tải lại proxy</button>
+        </div>
+        <form id="proxyForm" class="ix-card ix-proxy-form">
+          <h3>Tạo hoặc sửa proxy</h3>
+          <input name="proxy_id" type="hidden" />
+          <div class="ix-inline-grid">
+              <div><label for="proxyType">Loại proxy</label><select id="proxyType" name="proxy_type"><option>http</option><option>https</option><option>socks5</option><option>ssh</option></select></div>
+              <div><label for="proxyIp">Máy chủ</label><input id="proxyIp" name="proxy_ip" type="text" required /></div>
+              <div><label for="proxyPort">Cổng</label><input id="proxyPort" name="proxy_port" type="text" required /></div>
+              <div><label for="proxyUser">Tài khoản</label><input id="proxyUser" name="proxy_user" type="text" /></div>
+              <div><label for="proxyPassword">Mật khẩu</label><input id="proxyPassword" name="proxy_password" type="password" /></div>
+              <div><label for="proxyTag">Thẻ</label><input id="proxyTag" name="tag" type="text" /></div>
+          </div>
+          <label for="proxyNote">Ghi chú</label><input id="proxyNote" name="note" type="text" />
+          <div class="app-actions">
+            <button id="proxySaveBtn" class="primary" type="submit">Lưu proxy</button>
+            <button id="proxyResetBtn" class="secondary" type="button">Làm mới biểu mẫu</button>
+            <button id="proxyAssignBtn" class="secondary" type="button">Gán cho profile đã chọn</button>
+          </div>
+        </form>
+        <div class="ix-filter-row">
+          <input id="proxiesSearch" type="text" placeholder="Tìm theo IP hoặc ghi chú" />
+          <select id="proxiesMode" aria-label="Lọc loại proxy"><option value="0">Tất cả</option><option value="1">Proxy riêng</option><option value="2">Đã mua</option></select>
+          <input id="proxiesTagId" type="number" min="0" value="0" aria-label="Lọc theo ID thẻ" placeholder="Thẻ" />
+          <input id="proxiesLimit" type="number" min="1" max="100" value="20" aria-label="Số proxy mỗi trang" placeholder="Số dòng" />
+          <button id="proxiesPrevBtn" class="ghost">Trước</button>
+          <span id="proxiesPageLabel" class="ix-page-label">1</span>
+          <button id="proxiesNextBtn" class="ghost">Sau</button>
+        </div>
+        <div id="proxiesTable" class="ix-table"></div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <button id="workspaceScrim" class="workspace-scrim" type="button" aria-label="Đóng tiện ích trình duyệt" hidden></button>
+  <script src="/automation-ui/app.js?v=app-editor-35"></script>
+</body>
+</html>

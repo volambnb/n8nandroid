@@ -7,6 +7,7 @@ playwright>=1.49.0
 # Web Framework
 fastapi>=0.115.0
 uvicorn[standard]>=0.32.0
+python-multipart>=0.0.9
 
 # Telegram Bot
 python-telegram-bot>=21.0
@@ -19,7 +20,12 @@ pydantic>=2.10.0
 pydantic-settings>=2.7.0
 
 # Utilities
+psutil>=6.1.1
 pyyaml>=6.0.2
+pyotp>=2.9.0
+pyperclip>=1.9.0
+numpy>=2.2.0
+opencv-python-headless>=4.11.0
 
 # MCP Server (OpenFang integration)
 mcp>=1.0.0

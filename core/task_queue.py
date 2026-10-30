@@ -37,6 +37,7 @@ class TaskItem:
     started_at: float | None = None
     finished_at: float | None = None
     retries: int = 0
+    max_retries: int | None = None
     priority: int = 0  # lower = higher priority
 
 
@@ -133,11 +134,20 @@ class TaskQueue:
         item.started_at = time.time()
         try:
             item.result = await self._worker_fn(item)
-            item.status = TaskStatus.DONE
+            item.status = (
+                TaskStatus.CANCELLED
+                if isinstance(item.result, dict) and item.result.get("cancelled")
+                else TaskStatus.DONE
+            )
         except Exception as exc:
             logger.exception("Task %s failed", item.id)
             item.error = str(exc)
-            if item.retries < settings.task_max_retries:
+            max_retries = (
+                settings.task_max_retries
+                if item.max_retries is None
+                else max(0, int(item.max_retries))
+            )
+            if item.retries < max_retries:
                 item.retries += 1
                 item.status = TaskStatus.PENDING
                 self._queue.put_nowait((item.priority, item.created_at, item))

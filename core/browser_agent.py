@@ -163,6 +163,6 @@ class BrowserAgent:
         finally:
             if browser is not None:
                 try:
-                    browser.close()
+                    await browser.close()
                 except Exception:
                     pass

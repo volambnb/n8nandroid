@@ -30,3 +30,15 @@ playwright-report/
 
 # Logs
 *.log
+
+# Automation runtime
+data/
+artifacts/
+output/
+.playwright-cli/
+
+# Local databases and phone captures
+*.db
+*.sqlite
+*.sqlite3
+phone_screenshot.png

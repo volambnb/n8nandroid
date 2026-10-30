@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import os
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -47,6 +45,7 @@ class Settings(BaseSettings):
     # --- FastAPI ---
     api_host: str = "127.0.0.1"
     api_port: int = 8000
+    api_bearer_token: str = ""
 
     # --- OpenFang ---
     openfang_url: str = "http://127.0.0.1:3000"
@@ -59,6 +58,12 @@ class Settings(BaseSettings):
 
     # --- Paths ---
     task_templates_path: str = str(BASE_DIR / "config" / "task_templates.yaml")
+    automation_db_path: str = str(BASE_DIR / "data" / "automation.db")
+    # By default, look for ARTEMIS as a sibling checkout. Override these paths
+    # in .env when the repositories or Android SDK live elsewhere.
+    artemis_root: str = str(BASE_DIR.parent / "artemis")
+    artemis_python: str = ""
+    adb_path: str = "adb"
 
 
 settings = Settings()

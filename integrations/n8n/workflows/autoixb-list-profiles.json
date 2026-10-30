@@ -1,0 +1,52 @@
+{
+  "name": "AutoIXB - List browser profiles",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "cae6bc10-7f65-4e8d-a244-cf915b7f6c13",
+      "name": "When clicking Execute workflow",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [260, 300]
+    },
+    {
+      "parameters": {
+        "resource": "automation",
+        "operation": "listProfiles"
+      },
+      "id": "db789635-b9f6-4a96-9387-bdb19162d4e4",
+      "name": "AutoIXB",
+      "type": "CUSTOM.autoIXB",
+      "typeVersion": 1,
+      "position": [520, 300],
+      "credentials": {
+        "autoIxbApi": {
+          "id": "replace-after-import",
+          "name": "AutoIXB API"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "When clicking Execute workflow": {
+      "main": [
+        [
+          {
+            "node": "AutoIXB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "9baf0746-7416-4f29-a9fa-671dfdfb5968",
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": []
+}

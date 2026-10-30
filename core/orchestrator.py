@@ -31,6 +31,7 @@ class Orchestrator:
         self.profiles = ProfileManager()
         self.registry = TaskRegistry()
         self.agent = BrowserAgent()
+        self.close_profile_on_finish = False
         self.queue = TaskQueue(worker_fn=self._worker)
         self._batches: dict[str, list[str]] = {}  # batch_id → [task_ids]
 
@@ -66,8 +67,8 @@ class Orchestrator:
             all_profiles = await self.profiles.list_all_profiles(
                 group_id=group_id, tag_id=tag_id
             )
-            wanted = set(profile_ids)
-            profiles = [p for p in all_profiles if p.profile_id in wanted]
+            wanted = {str(pid).strip() for pid in profile_ids if str(pid).strip()}
+            profiles = [p for p in all_profiles if str(p.profile_id) in wanted]
         else:
             profiles = await self.profiles.list_all_profiles(
                 group_id=group_id, tag_id=tag_id
@@ -158,4 +159,5 @@ class Orchestrator:
                 raise RuntimeError(result.error or "Page-Agent task failed")
             return result
         finally:
-            await self.profiles.close_profile(item.profile_id)
+            if self.close_profile_on_finish:
+                await self.profiles.close_profile(item.profile_id)
